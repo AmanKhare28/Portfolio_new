@@ -1,11 +1,29 @@
 import "./App.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform, AnimatePresence, useInView } from "framer-motion";
 
 function App() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [activeSection, setActiveSection] = useState(0);
+  const { scrollYProgress } = useScroll();
+  const heroRef = useRef(null);
+  const aboutRef = useRef(null);
+  const skillsRef = useRef(null);
+  const projectsRef = useRef(null);
+  const academicRef = useRef(null);
+
+  const heroInView = useInView(heroRef, { threshold: 0.3 });
+  const aboutInView = useInView(aboutRef, { threshold: 0.3 });
+  const skillsInView = useInView(skillsRef, { threshold: 0.3 });
+  const projectsInView = useInView(projectsRef, { threshold: 0.3 });
+  const academicInView = useInView(academicRef, { threshold: 0.3 });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [1, 0.8, 0.8, 0]);
 
   useEffect(() => {
-    setIsVisible(true);
+    const timer = setTimeout(() => setIsLoaded(true), 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const skills = {
@@ -67,214 +85,666 @@ function App() {
     }
   ];
 
-  const ScrollIndicator = () => (
-    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-      <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
-        <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
-      </div>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 100
+      }
+    }
+  };
+
+  const skillVariants = {
+    hidden: { scale: 0, opacity: 0 },
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 10,
+        stiffness: 100
+      }
+    },
+    hover: {
+      scale: 1.1,
+      rotate: [0, -5, 5, 0],
+      transition: { duration: 0.3 }
+    }
+  };
+
+  const projectVariants = {
+    hidden: { 
+      opacity: 0,
+      rotateY: -15,
+      z: -100
+    },
+    visible: {
+      opacity: 1,
+      rotateY: 0,
+      z: 0,
+      transition: {
+        type: "spring",
+        damping: 15,
+        stiffness: 100,
+        duration: 0.6
+      }
+    },
+    hover: {
+      y: -10,
+      rotateY: 5,
+      scale: 1.02,
+      transition: { duration: 0.3 }
+    }
+  };
+
+  const FloatingElements = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ 
+            opacity: [0, 1, 0], 
+            scale: [0, 1, 0],
+            x: [0, Math.random() * 200 - 100],
+            y: [0, Math.random() * 200 - 100]
+          }}
+          transition={{ 
+            duration: 4,
+            repeat: Infinity,
+            delay: i * 0.5,
+            ease: "easeInOut"
+          }}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+        >
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: i % 2 === 0 ? '#4b607f' : '#f3701e' }} />
+        </motion.div>
+      ))}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-        <div className="absolute inset-0">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute bg-white rounded-full opacity-10 animate-pulse"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${Math.random() * 4 + 1}px`,
-                height: `${Math.random() * 4 + 1}px`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${Math.random() * 3 + 2}s`
-              }}
-            />
-          ))}
-        </div>
-        
-        <div className={`text-center z-10 px-4 max-w-4xl mx-auto transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Hello, I am Aman Khare
-          </h1>
-          <p className="text-xl md:text-3xl text-gray-300 mb-8 font-light">
-            A Passionate{" "}
-            <span className="text-blue-400 font-semibold">Developer</span>, {" "}
-            <span className="text-purple-400 font-semibold">Designer</span>, {" "}
-            <span className="text-pink-400 font-semibold">Problem Solver</span>
-          </p>
-          <button
-            onClick={() => window.open("https://drive.google.com/file/d/1SX2_Icak3F3QdOMHvZemkkJ4J-bB4aVt/view?usp=sharing", "_blank")}
-            className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
+    <div className="min-h-screen font-inter" style={{ backgroundColor: '#e8d8c9' }}>
+      <FloatingElements />
+      
+      {/* Navigation */}
+      <motion.nav 
+        className="fixed top-0 left-0 right-0 z-50 p-6"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 100 }}
+      >
+        <div className="flex justify-center">
+          <motion.div 
+            className="bg-white rounded-full px-8 py-3 shadow-lg border border-gray-200"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", damping: 15, stiffness: 200 }}
           >
-            <span className="flex items-center space-x-2">
-              <span>View My Resume</span>
-              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </span>
-          </button>
+            <div className="flex space-x-8">
+              {['Home', 'About', 'Skills', 'Projects', 'Education'].map((item, index) => (
+                <motion.button
+                  key={item}
+                  className="text-sm font-medium transition-colors duration-200"
+                  style={{ 
+                    color: activeSection === index ? '#f3701e' : '#4b607f' 
+                  }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveSection(index)}
+                >
+                  {item}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
         </div>
-        <ScrollIndicator />
-      </section>
+      </motion.nav>
+
+      {/* Hero Section */}
+      <motion.section 
+        ref={heroRef}
+        className="min-h-screen flex items-center justify-center relative px-4"
+        style={{ y, opacity }}
+      >
+        <motion.div
+          className="text-center max-w-6xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isLoaded ? "visible" : "hidden"}
+        >
+          <motion.div
+            variants={itemVariants}
+            className="mb-8"
+          >
+            <motion.h1 
+              className="text-6xl md:text-8xl font-black mb-6"
+              style={{ color: '#4b607f' }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ 
+                type: "spring",
+                damping: 10,
+                stiffness: 100,
+                delay: 0.2
+              }}
+            >
+              Hello, I am{" "}
+              <motion.span
+                style={{ color: '#f3701e' }}
+                animate={{ 
+                  textShadow: [
+                    "0 0 0px #f3701e",
+                    "0 0 20px #f3701e",
+                    "0 0 0px #f3701e"
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Aman Khare
+              </motion.span>
+            </motion.h1>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            className="mb-12"
+          >
+            <p className="text-2xl md:text-4xl font-light mb-8" style={{ color: '#4b607f' }}>
+              A Passionate{" "}
+              <motion.span
+                style={{ color: '#f3701e' }}
+                className="font-semibold"
+                whileHover={{ scale: 1.1, rotate: [0, -2, 2, 0] }}
+              >
+                Developer
+              </motion.span>, {" "}
+              <motion.span
+                style={{ color: '#4b607f' }}
+                className="font-semibold"
+                whileHover={{ scale: 1.1, rotate: [0, 2, -2, 0] }}
+              >
+                Designer
+              </motion.span>, {" "}
+              <motion.span
+                style={{ color: '#f3701e' }}
+                className="font-semibold"
+                whileHover={{ scale: 1.1, rotate: [0, -2, 2, 0] }}
+              >
+                Problem Solver
+              </motion.span>
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+          >
+            <motion.button
+              onClick={() => window.open("https://drive.google.com/file/d/1SX2_Icak3F3QdOMHvZemkkJ4J-bB4aVt/view?usp=sharing", "_blank")}
+              className="group relative overflow-hidden bg-white border-2 text-lg font-bold py-6 px-12 rounded-full shadow-lg"
+              style={{ 
+                borderColor: '#4b607f',
+                color: '#4b607f'
+              }}
+              whileHover={{ 
+                scale: 1.05,
+                boxShadow: "0 20px 40px rgba(75, 96, 127, 0.3)"
+              }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", damping: 15, stiffness: 200 }}
+            >
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{ backgroundColor: '#f3701e' }}
+                initial={{ scale: 0, opacity: 0 }}
+                whileHover={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+              <span className="relative z-10 flex items-center space-x-3 group-hover:text-white transition-colors duration-300">
+                <span>View My Resume</span>
+                <motion.svg 
+                  className="w-6 h-6" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </motion.svg>
+              </span>
+            </motion.button>
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 border-2 rounded-full flex justify-center" style={{ borderColor: '#4b607f' }}>
+            <motion.div 
+              className="w-1 h-3 rounded-full mt-2"
+              style={{ backgroundColor: '#f3701e' }}
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
+      </motion.section>
 
       {/* About Section */}
-      <section className="py-20 px-4">
+      <motion.section 
+        ref={aboutRef}
+        className="py-32 px-4"
+        style={{ backgroundColor: 'white' }}
+      >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-16 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <motion.h2 
+            className="text-5xl md:text-7xl font-black text-center mb-20"
+            style={{ color: '#4b607f' }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={aboutInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             About Me
-          </h2>
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-white/20 hover:bg-white/15 transition-all duration-500">
-            <div className="text-lg md:text-xl text-gray-300 leading-relaxed">
-              <p className="mb-6">
-                👋 Hey there! I'm <span className="text-blue-400 font-semibold">Aman Khare</span>, a tech enthusiast, problem solver, and full-stack developer with a knack for turning ideas into interactive, user-friendly applications. From building smart web apps with Next.js to diving deep into AI and machine learning, I love pushing the boundaries of what's possible.
-              </p>
-              <p>
-                When I'm not coding, you'll probably find me leading tech workshops, designing cool interfaces, or solving complex algorithms just for fun! 🚀 Always up for a challenge and excited to build the next big thing. Let's connect and create something amazing together!
-              </p>
-            </div>
-          </div>
+          </motion.h2>
+          <motion.div 
+            className="relative"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={aboutInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <motion.div 
+              className="bg-white border-2 rounded-3xl p-12 shadow-xl relative overflow-hidden"
+              style={{ borderColor: '#4b607f' }}
+              whileHover={{ 
+                scale: 1.02,
+                boxShadow: "0 25px 50px rgba(75, 96, 127, 0.2)"
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div
+                className="absolute top-0 left-0 w-full h-2 rounded-t-3xl"
+                style={{ backgroundColor: '#f3701e' }}
+                initial={{ scaleX: 0 }}
+                animate={aboutInView ? { scaleX: 1 } : { scaleX: 0 }}
+                transition={{ duration: 1, delay: 0.6 }}
+              />
+              <div className="text-lg md:text-xl leading-relaxed" style={{ color: '#4b607f' }}>
+                <motion.p 
+                  className="mb-6"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={aboutInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
+                >
+                  👋 Hey there! I'm <span className="font-bold" style={{ color: '#f3701e' }}>Aman Khare</span>, a tech enthusiast, problem solver, and full-stack developer with a knack for turning ideas into interactive, user-friendly applications. From building smart web apps with Next.js to diving deep into AI and machine learning, I love pushing the boundaries of what's possible.
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={aboutInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                  transition={{ duration: 0.6, delay: 1 }}
+                >
+                  When I'm not coding, you'll probably find me leading tech workshops, designing cool interfaces, or solving complex algorithms just for fun! 🚀 Always up for a challenge and excited to build the next big thing. Let's connect and create something amazing together!
+                </motion.p>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Skills Section */}
-      <section className="py-20 px-4 bg-black/20">
+      <motion.section 
+        ref={skillsRef}
+        className="py-32 px-4"
+        style={{ backgroundColor: '#e8d8c9' }}
+      >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-16 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <motion.h2 
+            className="text-5xl md:text-7xl font-black text-center mb-20"
+            style={{ color: '#4b607f' }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={skillsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 0.6 }}
+          >
             My Skills
-          </h2>
-          <div className="grid gap-8">
+          </motion.h2>
+          <motion.div 
+            className="space-y-12"
+            variants={containerVariants}
+            initial="hidden"
+            animate={skillsInView ? "visible" : "hidden"}
+          >
             {Object.entries(skills).map(([category, skillList], categoryIndex) => (
-              <div 
+              <motion.div 
                 key={category}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-500"
-                style={{ animationDelay: `${categoryIndex * 0.1}s` }}
+                variants={itemVariants}
+                className="bg-white border-2 rounded-2xl p-8 shadow-lg"
+                style={{ borderColor: '#4b607f' }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 20px 40px rgba(75, 96, 127, 0.15)"
+                }}
               >
-                <h3 className="text-xl font-bold text-blue-400 mb-4">{category}</h3>
-                <div className="flex flex-wrap gap-3">
+                <motion.h3 
+                  className="text-2xl font-bold mb-6"
+                  style={{ color: '#f3701e' }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={skillsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                  transition={{ delay: categoryIndex * 0.1 + 0.3 }}
+                >
+                  {category}
+                </motion.h3>
+                <motion.div 
+                  className="flex flex-wrap gap-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate={skillsInView ? "visible" : "hidden"}
+                >
                   {skillList.map((skill, index) => (
-                    <span
+                    <motion.span
                       key={skill}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white rounded-full text-sm font-medium border border-blue-400/30 hover:border-blue-400 hover:scale-105 transition-all duration-300 cursor-default"
-                      style={{ animationDelay: `${(categoryIndex * skillList.length + index) * 0.05}s` }}
+                      variants={skillVariants}
+                      whileHover="hover"
+                      className="px-6 py-3 border-2 rounded-full text-sm font-semibold cursor-default"
+                      style={{ 
+                        backgroundColor: 'white',
+                        borderColor: '#4b607f',
+                        color: '#4b607f'
+                      }}
+                      custom={index}
                     >
                       {skill}
-                    </span>
+                    </motion.span>
                   ))}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Projects Section */}
-      <section className="py-20 px-4">
+      <motion.section 
+        ref={projectsRef}
+        className="py-32 px-4"
+        style={{ backgroundColor: 'white' }}
+      >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-16 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <motion.h2 
+            className="text-5xl md:text-7xl font-black text-center mb-20"
+            style={{ color: '#4b607f' }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={projectsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 0.6 }}
+          >
             My Projects
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
+          </motion.h2>
+          <motion.div 
+            className="grid md:grid-cols-2 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            animate={projectsInView ? "visible" : "hidden"}
+          >
             {projects.map((project, index) => (
-              <div 
+              <motion.div 
                 key={project.name}
-                className="group bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 hover:scale-105 transition-all duration-500"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                variants={projectVariants}
+                whileHover="hover"
+                className="group relative bg-white border-2 rounded-2xl p-8 shadow-lg"
+                style={{ borderColor: '#4b607f' }}
               >
-                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-300">
+                <motion.div
+                  className="absolute top-0 left-0 w-full h-1 rounded-t-2xl"
+                  style={{ backgroundColor: '#f3701e' }}
+                  initial={{ scaleX: 0 }}
+                  animate={projectsInView ? { scaleX: 1 } : { scaleX: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.2 }}
+                />
+                <motion.h3 
+                  className="text-3xl font-bold mb-4"
+                  style={{ color: '#4b607f' }}
+                  whileHover={{ scale: 1.05 }}
+                >
                   {project.name}
-                </h3>
-                <p className="text-gray-300 mb-4">{project.description}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.skills.map((skill) => (
-                    <span key={skill} className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-xs font-medium">
+                </motion.h3>
+                <p className="mb-6 text-lg" style={{ color: '#4b607f' }}>{project.description}</p>
+                <motion.div 
+                  className="flex flex-wrap gap-3 mb-8"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate={projectsInView ? "visible" : "hidden"}
+                >
+                  {project.skills.map((skill, skillIndex) => (
+                    <motion.span 
+                      key={skill} 
+                      className="px-4 py-2 rounded-full text-sm font-medium border-2"
+                      style={{ 
+                        backgroundColor: '#f3701e',
+                        color: 'white',
+                        borderColor: '#f3701e'
+                      }}
+                      variants={skillVariants}
+                      custom={skillIndex}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                    >
                       {skill}
-                    </span>
+                    </motion.span>
                   ))}
-                </div>
+                </motion.div>
                 <div className="flex space-x-4">
                   {project.demo && (
-                    <button
+                    <motion.button
                       onClick={() => window.open(project.demo, "_blank")}
-                      className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
+                      className="flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold border-2"
+                      style={{ 
+                        backgroundColor: '#f3701e',
+                        color: 'white',
+                        borderColor: '#f3701e'
+                      }}
+                      whileHover={{ 
+                        scale: 1.05,
+                        boxShadow: "0 10px 20px rgba(243, 112, 30, 0.3)"
+                      }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       <span>Live Demo</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <motion.svg 
+                        className="w-5 h-5" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                        whileHover={{ x: 3 }}
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </button>
+                      </motion.svg>
+                    </motion.button>
                   )}
-                  <button
+                  <motion.button
                     onClick={() => window.open(project.github, "_blank")}
-                    className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
+                    className="flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold border-2 bg-white"
+                    style={{ 
+                      borderColor: '#4b607f',
+                      color: '#4b607f'
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      backgroundColor: '#4b607f',
+                      color: 'white'
+                    }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <span>GitHub</span>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <motion.svg 
+                      className="w-5 h-5" 
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                    </svg>
-                  </button>
+                    </motion.svg>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Academic Journey Section */}
-      <section className="py-20 px-4 bg-black/20">
+      <motion.section 
+        ref={academicRef}
+        className="py-32 px-4"
+        style={{ backgroundColor: '#e8d8c9' }}
+      >
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-16 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <motion.h2 
+            className="text-5xl md:text-7xl font-black text-center mb-20"
+            style={{ color: '#4b607f' }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={academicInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 0.6 }}
+          >
             Academic Journey
-          </h2>
-          <div className="space-y-8">
+          </motion.h2>
+          <motion.div 
+            className="space-y-8"
+            variants={containerVariants}
+            initial="hidden"
+            animate={academicInView ? "visible" : "hidden"}
+          >
             {education.map((edu, index) => (
-              <div 
+              <motion.div 
                 key={index}
-                className="flex items-center space-x-6 bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-500 group"
-                style={{ animationDelay: `${index * 0.2}s` }}
+                variants={itemVariants}
+                className="flex items-center space-x-8 bg-white border-2 rounded-2xl p-8 shadow-lg group"
+                style={{ borderColor: '#4b607f' }}
+                whileHover={{ 
+                  scale: 1.02,
+                  x: 10,
+                  boxShadow: "0 20px 40px rgba(75, 96, 127, 0.15)"
+                }}
               >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg ${edu.current ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-600'} text-white group-hover:scale-110 transition-transform duration-300`}>
+                <motion.div 
+                  className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-xl border-4"
+                  style={{ 
+                    backgroundColor: edu.current ? '#f3701e' : '#4b607f',
+                    color: 'white',
+                    borderColor: edu.current ? '#f3701e' : '#4b607f'
+                  }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    rotate: 360,
+                    boxShadow: edu.current ? "0 0 20px #f3701e" : "0 0 20px #4b607f"
+                  }}
+                  transition={{ duration: 0.6 }}
+                >
                   {edu.year.split('-')[0] || edu.year}
-                </div>
+                </motion.div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors duration-300">
+                  <motion.h3 
+                    className="text-2xl font-bold mb-2"
+                    style={{ color: '#4b607f' }}
+                    whileHover={{ color: '#f3701e' }}
+                  >
                     {edu.degree}
-                  </h3>
-                  <p className="text-gray-300">{edu.institution}</p>
-                  <p className="text-sm text-gray-400">{edu.year}</p>
+                  </motion.h3>
+                  <p className="text-lg mb-1" style={{ color: '#4b607f' }}>{edu.institution}</p>
+                  <p className="text-sm" style={{ color: '#4b607f', opacity: 0.7 }}>{edu.year}</p>
                   {edu.current && (
-                    <span className="inline-block mt-2 px-3 py-1 bg-green-600/30 text-green-300 rounded-full text-xs font-medium">
+                    <motion.span 
+                      className="inline-block mt-3 px-4 py-2 rounded-full text-sm font-bold border-2"
+                      style={{ 
+                        backgroundColor: '#f3701e',
+                        color: 'white',
+                        borderColor: '#f3701e'
+                      }}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: index * 0.2 + 0.5, type: "spring" }}
+                      whileHover={{ scale: 1.1, boxShadow: "0 5px 15px rgba(243, 112, 30, 0.4)" }}
+                    >
                       Current
-                    </span>
+                    </motion.span>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 bg-black/40">
+      <footer className="py-20 px-4" style={{ backgroundColor: '#4b607f' }}>
         <div className="max-w-4xl mx-auto text-center">
-          <h3 className="text-2xl font-bold text-white mb-4">Let's Connect!</h3>
-          <p className="text-gray-300 mb-6">Ready to build something amazing together?</p>
-          <div className="flex justify-center space-x-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 cursor-pointer">
-              <span className="text-white font-bold">💼</span>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 cursor-pointer">
-              <span className="text-white font-bold">📧</span>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-red-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 cursor-pointer">
-              <span className="text-white font-bold">🚀</span>
-            </div>
-          </div>
-          <p className="text-gray-500 mt-8">&copy; 2024 Aman Khare. Built with React & Tailwind CSS</p>
+          <motion.h3 
+            className="text-3xl font-bold text-white mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            Let's Connect!
+          </motion.h3>
+          <motion.p 
+            className="text-xl text-white mb-12 opacity-90"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Ready to build something amazing together?
+          </motion.p>
+          <motion.div 
+            className="flex justify-center space-x-8 mb-12"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+          >
+            {['💼', '📧', '🚀'].map((emoji, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl cursor-pointer"
+                whileHover={{ 
+                  scale: 1.2,
+                  rotate: 360,
+                  backgroundColor: '#f3701e',
+                  boxShadow: "0 10px 30px rgba(243, 112, 30, 0.4)"
+                }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+              >
+                {emoji}
+              </motion.div>
+            ))}
+          </motion.div>
+          <motion.p 
+            className="text-white opacity-60"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            &copy; 2024 Aman Khare. Built with React, Framer Motion & Tailwind CSS
+          </motion.p>
         </div>
       </footer>
     </div>
