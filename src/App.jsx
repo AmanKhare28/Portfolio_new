@@ -26,6 +26,32 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Update active section based on which section is in view
+  useEffect(() => {
+    if (heroInView) setActiveSection(0);
+    else if (aboutInView) setActiveSection(1);
+    else if (skillsInView) setActiveSection(2);
+    else if (projectsInView) setActiveSection(3);
+    else if (academicInView) setActiveSection(4);
+  }, [heroInView, aboutInView, skillsInView, projectsInView, academicInView]);
+
+  // Smooth scroll to section function
+  const scrollToSection = (sectionIndex) => {
+    const sections = [heroRef, aboutRef, skillsRef, projectsRef, academicRef];
+    const targetRef = sections[sectionIndex];
+    
+    if (targetRef && targetRef.current) {
+      const navHeight = 80; // Account for fixed navbar height
+      const targetPosition = targetRef.current.offsetTop - navHeight;
+      
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    }
+    setActiveSection(sectionIndex);
+  };
+
   const skills = {
     "Programming Languages": ["JavaScript", "C++", "C", "Python", "Java", "TypeScript", "Golang", "SQL"],
     "Web Technologies": ["HTML", "CSS", "ReactJS", "NextJS", "Tailwind CSS", "Bootstrap"],
@@ -199,22 +225,34 @@ function App() {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", damping: 15, stiffness: 200 }}
           >
-            <div className="flex space-x-8">
-              {['Home', 'About', 'Skills', 'Projects', 'Education'].map((item, index) => (
-                <motion.button
-                  key={item}
-                  className="text-sm font-medium transition-colors duration-200"
-                  style={{ 
-                    color: activeSection === index ? '#f3701e' : '#4b607f' 
-                  }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveSection(index)}
-                >
-                  {item}
-                </motion.button>
-              ))}
-            </div>
+                                      <div className="flex space-x-8">
+               {['Home', 'About', 'Skills', 'Projects', 'Education'].map((item, index) => (
+                 <motion.button
+                   key={item}
+                   className="relative text-sm font-medium transition-colors duration-200 px-3 py-2 rounded-lg"
+                   style={{ 
+                     color: activeSection === index ? '#f3701e' : '#4b607f' 
+                   }}
+                   whileHover={{ 
+                     scale: 1.1,
+                     backgroundColor: activeSection === index ? 'rgba(243, 112, 30, 0.1)' : 'rgba(75, 96, 127, 0.1)'
+                   }}
+                   whileTap={{ scale: 0.95 }}
+                   onClick={() => scrollToSection(index)}
+                 >
+                   {activeSection === index && (
+                     <motion.div
+                       className="absolute inset-0 rounded-lg border-2"
+                       style={{ borderColor: '#f3701e' }}
+                       layoutId="activeNavIndicator"
+                       initial={false}
+                       transition={{ type: "spring", damping: 15, stiffness: 300 }}
+                     />
+                   )}
+                   <span className="relative z-10">{item}</span>
+                 </motion.button>
+               ))}
+             </div>
           </motion.div>
         </div>
       </motion.nav>
